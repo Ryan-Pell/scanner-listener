@@ -1,0 +1,6 @@
+{
+  "explorer.fileNesting.patterns": {
+    "*.wasm": "$(capture).js, $(capture).wasm.d.ts",
+    "*.js": "$(capture).js.map, $(capture).min.js, $(capture).d.ts",
+  }  
+}

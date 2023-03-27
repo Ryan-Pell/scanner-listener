@@ -3,11 +3,6 @@ use wasm_bindgen::prelude::*;
 use web_sys::{console, KeyboardEvent};
 use substring::Substring;
 
-#[wasm_bindgen]
-#[derive(Copy, Clone, Debug)]
-pub enum EventEnum {
-  Data = "data",
-}
 
 #[derive(Default)]
 struct Scanner {
@@ -22,8 +17,13 @@ static mut SCANNER: Scanner = Scanner{
   event: None
 };
 
+#[wasm_bindgen]
+pub enum EVENTS {
+  DATA = "data"
+}
+
 #[wasm_bindgen(skip)]
-pub unsafe fn emit_event(data: String) {
+pub unsafe fn emit_event(_evt: EVENTS, data: String) {
   let scan = data.clone();
   let f = SCANNER.event.clone().unwrap_or_default();
   let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
@@ -39,15 +39,22 @@ pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
   else { SCANNER.event = Some(f.clone()); }
 
   let closure = Closure::<dyn FnMut(KeyboardEvent)>::new(move | evt: KeyboardEvent | unsafe {
-    if evt.char_code() == 123 { SCANNER.scan = evt.key(); } //Start Logging
-    else if evt.char_code() == 13 { emit_event(SCANNER.scan.clone()); SCANNER.scan = String::new(); } //End Logging
-    else if String::is_empty(&SCANNER.scan).not() && SCANNER.scan.substring(0, 1) == "{" { console::log_1(&evt.key().into()); SCANNER.scan.push_str(&evt.key()); } //Prepend Scan
+    if evt.char_code() == 123 { //Start Logging
+      SCANNER.scan = evt.key(); 
+    } 
+    else if evt.char_code() == 13 { //End Logging
+      emit_event(EVENTS::DATA, SCANNER.scan.clone()); 
+      SCANNER.scan = String::new(); 
+    } 
+    else if String::is_empty(&SCANNER.scan).not() && SCANNER.scan.substring(0, 1) == "{" { //Prepend Scan
+      console::log_1(&evt.key().into()); SCANNER.scan.push_str(&evt.key()); 
+    } 
   });
 
   let win = web_sys::window().unwrap();
-  let evt = win.add_event_listener_with_callback( &"keypress", closure.as_ref().unchecked_ref());
+  let _evt = win.add_event_listener_with_callback( &"keypress", closure.as_ref().unchecked_ref());
 
-  let r = closure.as_ref();
+  let _r = closure.as_ref();
   SCANNER.keyboard_evt = Some(closure.as_ref().into());
   closure.forget();
   Ok(())

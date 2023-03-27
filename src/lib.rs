@@ -8,35 +8,46 @@ use substring::Substring;
 struct Scanner {
   keyboard_evt: Option<JsValue>,
   pub scan: String,
-  pub event: Option<js_sys::Function>
+  pub event: ScannerEvents
+}
+
+#[derive(Default)]
+struct ScannerEvents {
+  data: Option<js_sys::Function>,
+  log: Option<js_sys::Function>
 }
 
 static mut SCANNER: Scanner = Scanner{
   keyboard_evt: None,
   scan: String::new(),
-  event: None
+  event: ScannerEvents { 
+    data: None,
+    log: None
+  }
 };
 
 #[wasm_bindgen]
+#[derive(PartialEq)]
 pub enum EVENTS {
-  DATA = "data"
+  DATA = "data",
+  LOG = "log"
 }
 
 #[wasm_bindgen(skip)]
 pub unsafe fn emit_event(_evt: EVENTS, data: String) {
   let scan = data.clone();
-  let f = SCANNER.event.clone().unwrap_or_default();
+  let f = SCANNER.event.data.clone().unwrap_or_default();
   let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
 }
 
 #[wasm_bindgen]
 pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
   //Check If Already Running
-  if SCANNER.event.is_some() { return Err(JsValue::from("There is already a Scanner instance running.")); }
+  if SCANNER.event.data.is_some() { return Err(JsValue::from("There is already a Scanner instance running.")); }
 
   //Set Callback Function
   if f.is_undefined() { return Err(JsValue::from("No return Function has been passed for a successful scan.")); }
-  else { SCANNER.event = Some(f.clone()); }
+  else { SCANNER.event.data = Some(f.clone()); }
 
   let closure = Closure::<dyn FnMut(KeyboardEvent)>::new(move | evt: KeyboardEvent | unsafe {
     if evt.char_code() == 123 { //Start Logging
@@ -62,7 +73,7 @@ pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
 
 #[wasm_bindgen]
 pub unsafe fn stop() -> Result<(), JsValue>{
-  SCANNER.event = None;
+  SCANNER.event.data = None;
 
   let win = web_sys::window().unwrap();
 
@@ -72,4 +83,23 @@ pub unsafe fn stop() -> Result<(), JsValue>{
   } else {
     return Err(JsValue::from("Unable to stop as Event has not been started."));
   }
+}
+
+#[wasm_bindgen(js_name="add_listener")]
+pub fn addListener(evt: EVENTS) -> Result<(), JsValue>{
+  match evt {
+    EVENTS::DATA => console::log_1(&"data".into()),
+    EVENTS::LOG => console::log_1(&"log".into()),
+    EVENTS::__Nonexhaustive => console::log_1(&"none".into())
+  }
+
+  Ok(())
+}
+
+#[wasm_bindgen(js_name="remove_listener")]
+pub unsafe fn removeListener(evt: EVENTS) -> Result<(), JsValue>{
+  if(evt == EVENTS::DATA){ stop(); }
+  else if(evt == EVENTS::LOG){ SCANNER.event.log = None; }
+  
+  Ok(())
 }

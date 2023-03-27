@@ -18,9 +18,9 @@ scanner.start((data) => console.log("Return:", data));
 //Stop Scanner
 scanner.stop();
 
-//Add Listener
-scanner.addListener(scanner.Event.LOG, (data: any) => console.log(data))
-scanner.removeListener(scanner.Event.LOG)
+//Add/Remove Listener
+scanner.addListener('log', (data: any) => console.log(data))
+scanner.removeListener('log')
 ```
 
 ### Start Function

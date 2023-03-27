@@ -17,6 +17,10 @@ scanner.start((data) => console.log("Return:", data));
 
 //Stop Scanner
 scanner.stop();
+
+//Add Listener
+scanner.addListener(scanner.Event.LOG, (data: any) => console.log(data))
+scanner.removeListener(scanner.Event.LOG)
 ```
 
 ### Start Function
@@ -24,3 +28,9 @@ This will start the keyboard listener on the main window element. Only one liste
 
 ### Stop Function
 This will stop the keyboard listener and clear the function from the window element.
+
+### Add Function
+Adding a Function will add the function to the relevant event. If the data event is used then the scanner must be running and will overwrite the existing output function.
+
+### Remove Function
+Removing will remove the relevant event. If the data event is called then this will stop if the scanner is running.

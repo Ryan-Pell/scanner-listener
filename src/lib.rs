@@ -111,7 +111,7 @@ pub unsafe fn remove_listener(evt: EVENTS) -> Result<(), JsValue>{
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_EVENTS: &'static str = r#"
-enum EVENTS {
+export enum Events {
     DATA = "data",
     LOG = "log"
 }

@@ -33,10 +33,20 @@ pub enum EVENTS {
   LOG = "log"
 }
 
-pub unsafe fn emit_event(_evt: EVENTS, data: String) {
-  let scan = data.clone();
-  let f = SCANNER.event.data.clone().unwrap_or_default();
-  let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
+pub unsafe fn emit_event(evt: EVENTS, data: String) {
+  match evt {
+    EVENTS::DATA => {
+      let scan = data.clone();
+      let f = SCANNER.event.data.clone().unwrap_or_default();
+      let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
+    },
+    EVENTS::LOG => {
+      let scan = data.clone();
+      let f = SCANNER.event.log.clone().unwrap_or_default();
+      let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
+    },
+    EVENTS::__Nonexhaustive => todo!(),
+  }
 }
 
 #[wasm_bindgen]
@@ -51,14 +61,16 @@ pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
   let closure = Closure::<dyn FnMut(KeyboardEvent)>::new(move | evt: KeyboardEvent | unsafe {
     if evt.char_code() == 123 { //Start Logging
       SCANNER.scan = evt.key(); 
+      emit_event(EVENTS::LOG, SCANNER.scan.clone());
     } 
     else if evt.char_code() == 13 { //End Logging
+      emit_event(EVENTS::LOG, SCANNER.scan.clone());
       emit_event(EVENTS::DATA, SCANNER.scan.clone()); 
       SCANNER.scan = String::new(); 
     } 
     else if String::is_empty(&SCANNER.scan).not() && SCANNER.scan.substring(0, 1) == "{" { //Prepend Scan
-      console::log_1(&evt.key().into()); 
       SCANNER.scan.push_str(&evt.key()); 
+      emit_event(EVENTS::LOG, SCANNER.scan.clone());
     } 
   });
 

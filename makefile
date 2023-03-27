@@ -1,5 +1,5 @@
 build:
-	wasm-pack build --target nodejs --out-name scanner-listner
+	wasm-pack build --out-name scanner-listner
 
 pack:
-	wasm-pack build --target nodejs --out-name scanner-listner --release
+	wasm-pack build --out-name scanner-listner --release

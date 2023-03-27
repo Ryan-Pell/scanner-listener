@@ -1,5 +1,5 @@
 # @ryanpell/scanner-listener
-Keyboard event listener for USB HID scanner
+WASM Keyboard event listener for USB HID scanner.
 
 ## Install
 **node.js**:

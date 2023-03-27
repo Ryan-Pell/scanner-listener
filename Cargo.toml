@@ -3,6 +3,9 @@ name = "scanner-listener"
 version = "0.1.0"
 authors = ["Ryan Pell <ryan@ryanpell.co.uk>"]
 edition = "2018"
+description = "Keyboard event listener for USB HID scanner"
+repository = "https://github.com/Ryan-Pell/scanner-listener"
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

@@ -27,25 +27,25 @@ static mut SCANNER: Scanner = Scanner{
 };
 
 #[wasm_bindgen]
-#[derive(PartialEq)]
-pub enum EVENTS {
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum Events {
   DATA = "data",
   LOG = "log"
 }
 
-pub unsafe fn emit_event(evt: EVENTS, data: String) {
+pub unsafe fn emit_event(evt: Events, data: String) {
   match evt {
-    EVENTS::DATA => {
+    Events::DATA => {
       let scan = data.clone();
       let f = SCANNER.event.data.clone().unwrap_or_default();
       let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
     },
-    EVENTS::LOG => {
+    Events::LOG => {
       let scan = data.clone();
       let f = SCANNER.event.log.clone().unwrap_or_default();
       let _ = f.call1(&JsValue::null(), &JsValue::from(scan));
     },
-    EVENTS::__Nonexhaustive => todo!(),
+    Events::__Nonexhaustive => todo!(),
   }
 }
 
@@ -61,16 +61,16 @@ pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
   let closure = Closure::<dyn FnMut(KeyboardEvent)>::new(move | evt: KeyboardEvent | unsafe {
     if evt.char_code() == 123 { //Start Logging
       SCANNER.scan = evt.key(); 
-      emit_event(EVENTS::LOG, SCANNER.scan.clone());
+      emit_event(Events::LOG, SCANNER.scan.clone());
     } 
     else if evt.char_code() == 13 { //End Logging
-      emit_event(EVENTS::LOG, SCANNER.scan.clone());
-      emit_event(EVENTS::DATA, SCANNER.scan.clone()); 
+      emit_event(Events::LOG, SCANNER.scan.clone());
+      emit_event(Events::DATA, SCANNER.scan.clone()); 
       SCANNER.scan = String::new(); 
     } 
     else if String::is_empty(&SCANNER.scan).not() && SCANNER.scan.substring(0, 1) == "{" { //Prepend Scan
       SCANNER.scan.push_str(&evt.key()); 
-      emit_event(EVENTS::LOG, SCANNER.scan.clone());
+      emit_event(Events::LOG, SCANNER.scan.clone());
     } 
   });
 
@@ -98,33 +98,25 @@ pub unsafe fn stop() -> Result<(), JsValue>{
 }
 
 #[wasm_bindgen(js_name="addListener")]
-pub unsafe fn add_listener(evt: EVENTS, f: &js_sys::Function) -> Result<(), JsValue>{
+pub unsafe fn add_listener(evt: &str, f: &js_sys::Function) -> Result<(), JsValue>{
   match evt {
-    EVENTS::DATA => {
+    "data" => {
       //Check is Scanner is running
       if SCANNER.event.data.is_some() { //Replace Existing Return Function
         SCANNER.event.data = Some(f.clone())
       }
     },
-    EVENTS::LOG => SCANNER.event.log = Some(f.clone()),
-    EVENTS::__Nonexhaustive => todo!()
+    "log" => SCANNER.event.log = Some(f.clone()),
+    _ => unimplemented!()
   }
 
   Ok(())
 }
 
 #[wasm_bindgen(js_name="removeListener")]
-pub unsafe fn remove_listener(evt: EVENTS) -> Result<(), JsValue>{
-  if evt == EVENTS::DATA && SCANNER.event.data.is_some() { let _ =stop(); } //Check is Scanner is running
-  else if evt == EVENTS::LOG { SCANNER.event.log = None; }
+pub unsafe fn remove_listener(evt: &str) -> Result<(), JsValue>{
+  if evt == "data" && SCANNER.event.data.is_some() { let _ = stop(); } //Check is Scanner is running
+  else if evt == "log" { SCANNER.event.log = None; }
   
   Ok(())
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_EVENTS: &'static str = r#"
-export enum Events {
-    DATA = "data",
-    LOG = "log"
-}
-"#;

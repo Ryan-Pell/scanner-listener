@@ -33,7 +33,6 @@ pub enum EVENTS {
   LOG = "log"
 }
 
-#[wasm_bindgen(skip)]
 pub unsafe fn emit_event(_evt: EVENTS, data: String) {
   let scan = data.clone();
   let f = SCANNER.event.data.clone().unwrap_or_default();
@@ -58,7 +57,8 @@ pub unsafe fn start(f: &js_sys::Function) -> Result<(), JsValue> {
       SCANNER.scan = String::new(); 
     } 
     else if String::is_empty(&SCANNER.scan).not() && SCANNER.scan.substring(0, 1) == "{" { //Prepend Scan
-      console::log_1(&evt.key().into()); SCANNER.scan.push_str(&evt.key()); 
+      console::log_1(&evt.key().into()); 
+      SCANNER.scan.push_str(&evt.key()); 
     } 
   });
 
@@ -85,21 +85,34 @@ pub unsafe fn stop() -> Result<(), JsValue>{
   }
 }
 
-#[wasm_bindgen(js_name="add_listener")]
-pub fn addListener(evt: EVENTS) -> Result<(), JsValue>{
+#[wasm_bindgen(js_name="addListener")]
+pub unsafe fn add_listener(evt: EVENTS, f: &js_sys::Function) -> Result<(), JsValue>{
   match evt {
-    EVENTS::DATA => console::log_1(&"data".into()),
-    EVENTS::LOG => console::log_1(&"log".into()),
-    EVENTS::__Nonexhaustive => console::log_1(&"none".into())
+    EVENTS::DATA => {
+      //Check is Scanner is running
+      if SCANNER.event.data.is_some() { //Replace Existing Return Function
+        SCANNER.event.data = Some(f.clone())
+      }
+    },
+    EVENTS::LOG => SCANNER.event.log = Some(f.clone()),
+    EVENTS::__Nonexhaustive => todo!()
   }
 
   Ok(())
 }
 
-#[wasm_bindgen(js_name="remove_listener")]
-pub unsafe fn removeListener(evt: EVENTS) -> Result<(), JsValue>{
-  if(evt == EVENTS::DATA){ stop(); }
-  else if(evt == EVENTS::LOG){ SCANNER.event.log = None; }
+#[wasm_bindgen(js_name="removeListener")]
+pub unsafe fn remove_listener(evt: EVENTS) -> Result<(), JsValue>{
+  if evt == EVENTS::DATA && SCANNER.event.data.is_some() { let _ =stop(); } //Check is Scanner is running
+  else if evt == EVENTS::LOG { SCANNER.event.log = None; }
   
   Ok(())
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_EVENTS: &'static str = r#"
+enum EVENTS {
+    DATA = "data",
+    LOG = "log"
+}
+"#;

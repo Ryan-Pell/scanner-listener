@@ -1,5 +1,5 @@
 build:
-	wasm-pack build --out-name scanner-listner
+	wasm-pack build --out-name scanner-listener
 
 pack:
-	wasm-pack build --out-name scanner-listner --release
+	wasm-pack build --out-name scanner-listener --release
